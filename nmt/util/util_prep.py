@@ -21,7 +21,7 @@ def clean_eng(x):
     return x
 
 def clean_chn(x):
-    x = re.sub('[。，！？\n]','',x)
+    x = re.sub('[,.!?。，！？\n]','',x)
     x = jieba.cut(x)
     return ' '.join(x)
 
@@ -34,7 +34,7 @@ def load_and_clean_data(filename):
     return np.array(data)
 
 def tokenize(texts, maxlen = 20, num_words = 9000):
-    tokenizer = Tokenizer(filters='',num_words = num_words)
+    tokenizer = Tokenizer(filters='',num_words = num_words, oov_token = '<oov>')
     tokenizer.fit_on_texts(texts)
     vocab_size = len(tokenizer.index_word) + 1
     max_len = max(list(map(lambda i: len(i.split()), texts)))
