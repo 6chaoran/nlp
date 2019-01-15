@@ -15,3 +15,5 @@ python infer_lstm.py
 # to check translation from user-input
 python infer_lstm.py -m input
 ```
+## Explaination
+[link](https://github.com/6chaoran/nlp/blob/master/nmt/doc/build-a-simple-machine-translator-part-1.md)
