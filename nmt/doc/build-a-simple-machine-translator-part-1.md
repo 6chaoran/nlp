@@ -28,11 +28,11 @@ However, we can't directly use the model for predicting, because we won't know t
 major steps to infer a seq2seq model:
 
 1. __Encoding__: feed the processed source sentences into encoder to generate the hidden states
-2. __Deocoding__: the initial token to start is '<s>', with the hidden states pass from encoder, we can predict the next token.
+2. __Deocoding__: the initial token to start is `<s>`, with the hidden states pass from encoder, we can predict the next token.
 3. __Token Search__: 
     + for each token prediction, we can choose the token with the most probability, this is called greedy search. We just get the best at current moment. 
     + alternatively, if we keep the n best candidate tokens, and search for a wider options, this is called beam search, n is the beam size.
-    + the stop criteria can be the '<e>' token or the length of sentence is reached the maximal.
+    + the stop criteria can be the `<e>` token or the length of sentence is reached the maximal.
 
 ## Dataset
 
