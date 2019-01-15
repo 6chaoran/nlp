@@ -15,7 +15,7 @@ The model consists of two major components:
 
 * __Decoder__: a RNN netowrk, used to generate the sequence based on learned pattern from encoder.
 
-major steps to train a seq2seq model:
+## steps to train a seq2seq model:
 
 1. __Word/Sentence representation__: this includes tokenize the input and output sentences, matrix representation of sentences, such as TF-IDF, bag-of-words.
 2. __Word Embedding__: lower dimensional representation of words. With a sizable corpus, embedding layers are highly recommended.
@@ -25,7 +25,7 @@ major steps to train a seq2seq model:
 
 However, we can't directly use the model for predicting, because we won't know the decoded sentences when we use the model to translate. Therefore, we need another inference model to performance translation (sequence generation).
 
-major steps to infer a seq2seq model:
+## steps to infer a seq2seq model:
 
 1. __Encoding__: feed the processed source sentences into encoder to generate the hidden states
 2. __Deocoding__: the initial token to start is `<s>`, with the hidden states pass from encoder, we can predict the next token.
@@ -34,13 +34,11 @@ major steps to infer a seq2seq model:
     + alternatively, if we keep the n best candidate tokens, and search for a wider options, this is called beam search, n is the beam size.
     + the stop criteria can be the `<e>` token or the length of sentence is reached the maximal.
 
-## Dataset
+# Dataset
 
 The data used in this post is from [ManyThings.org](http://www.manythings.org/anki/). It provides toy datasets for many bilingual sentence pairs. I used [english-chinese dataset](http://www.manythings.org/anki/cmn-eng.zip).
 
-## Prepare Data
-
-### clean punucations
+## clean punucations
 * for english, I simply removed `,.!?` and convert to lower case
 * for chinese, I only removed `,.!?。，！？\n`
 
@@ -53,7 +51,7 @@ The data used in this post is from [ManyThings.org](http://www.manythings.org/an
 4   Hello!  你好
 ```
 
-### tokenize
+## tokenize
 * for english, I just split the sentence by space
 * for chinese, I used [jieba](https://github.com/fxsjy/jieba) parser to cut the sentence.
 
@@ -77,7 +75,7 @@ def clean_chn(x):
 3   wait    等等
 4   hello   你好
 ```
-### sequence reprenstation
+## sequence reprenstation
 I used integer to represent the word in the sentence, so that we can use word embedding easily. Two separate corpus will be kept for source and target sentences. To cater for sentence with different length, we capped the sentence at `maxlen` for long sentence and pad `0` for short sentence.   
 
 I used below code snippet to generate vocabulary size, max_len, and padded sequence for both english and chinese sentences.
@@ -126,14 +124,14 @@ The resulting prepared data should look like something below:
 3 [ 160    0    0    0    0    0    0    0    0]    [1671    0    0    0    0    0    0    0    0    0    0    0    0    0]
 4 [1211    0    0    0    0    0    0    0    0]    [ 527    0    0    0    0    0    0    0    0    0    0    0    0    0]
 ```
-## Model Configuration
+# Model Configuration
 
 we will need 3 models: 
 
 * an integrated encoder-decoder model for training
 * an encoder model and a decoder model for inference
 
-### Encoder
+## Encoder
 
 Encoder is simply an Embedding layer + LSTM.
 
@@ -162,7 +160,7 @@ enc_model = Model(enc_input, enc_states)
 ```
 ![](https://raw.githubusercontent.com/6chaoran/nlp/master/nmt/image/encoder_model_layout.png)
 
-### Decoder
+## Decoder
 
 Decoder is another combining of Embedding layer and LSTM.
 
@@ -192,7 +190,7 @@ dec_model = Model([dec_input]+dec_states_input, [dec_output]+dec_states_output)
 ```
 ![](https://raw.githubusercontent.com/6chaoran/nlp/master/nmt/image/decoder_model_layout.png)
 
-### Encoder-Deocder
+## Encoder-Deocder
 
 To train the encoder-decoder network, we just combine the parts together.
 
@@ -208,7 +206,7 @@ enc_dec_model.compile(optimizer='adam', loss='categorical_crossentropy')
 
 ![](https://raw.githubusercontent.com/6chaoran/nlp/master/nmt/image/encoder_decoder_model_layout.png)
 
-## Model Training
+# Model Training
 
 As mentioned earlier, we will teach forcing for the sequence training. Before that, we need prepare the target sequence by shifting one word of decoder sequence. 
 
@@ -267,7 +265,7 @@ Epoch 2/30
 4608/9000 [==============>...............] - ETA: 18s - loss: 0.6771
 ```
 
-## Model Inference
+# Model Inference
 
 You can directly apply inference model, or you can load from previously trained weights.
 
@@ -277,7 +275,7 @@ enc_dec_model, enc_mode, dec_model = enc_dec_lstm(**model_config)
 enc_dec_model.load_weights(weight_path)
 ```
 
-### initial states and token
+## initial states and token
 
 The initial states is predicted results from encoder. That can be achieved by `enc_model.predict(src_input_seq)`. The initial token is `<s>`, I keep track of a triple of (index, token, prediction probability) for each prediction, thus the triple for initial token is `([1],['<s>'],[1.0])`. The following code snippet generate the initial states and token, with the given source sentence.
 
@@ -307,22 +305,49 @@ def _init_states(enc_model, src_sentence, tokenizers, src_max_len):
     return ([tar_index], [tar_token], [1.0]), states
 ```
 
-### update states and token
+## update states and token
 
 So start from `<s>`, the decoder will be used to update the states and generate predicted next token. We will extract the most likely token and append behind `<s>`. We keep updating the tokens, until we reach `<e>` token or reach the max time-step in decoding sentences.
 
 ```python
-def infer_lstm(src_sentence, enc_model, dec_model, tokenizers, max_len = (9,13)):
-    """infer the seq2seq model
+def _update_states(dec_model, tar_triple, states, tokenizers):
+    """ update the decoder states
     Args:
-        src_sentence
-        enc_model
         dec_model
-        tokenizers,
-        max_len
+        tar_triple: (target index[list], target_token[list], target_probability[list])
+        states:
+        params:
     Return:
-        decoded sentence
+        tuple (tar_triple, states)
     """
+    src_tokenizer, tar_tokenizer = tokenizers
+    src_index_word = src_tokenizer.index_word
+    src_word_index = src_tokenizer.word_index 
+    tar_index_word = tar_tokenizer.index_word
+    tar_word_index = tar_tokenizer.word_index
+    tar_index, tar_token, tar_prob = tar_triple
+    # predict the token probability, and states
+    probs, state_h, state_c = dec_model.predict([[tar_index[-1]]] + states)
+    states_new = [state_h, state_c]
+    # update the triple
+    # greedy search: each time find the most likely token (last position in the sequence)
+    probs = probs[0,-1,:]
+    tar_index_new = np.argmax(probs)
+    tar_token_new = tar_index_word.get(tar_index_new, None)
+    tar_prob_new = probs[tar_index_new]
+    tar_triple_new = ( 
+        tar_index + [tar_index_new],
+        tar_token + [tar_token_new],
+        tar_prob + [tar_prob_new]
+        )
+    return tar_triple_new, states_new
+```
+
+this is the code to generate translated results for the first 50 rows. 
+
+```python
+def infer_lstm(src_sentence, enc_model, dec_model, tokenizers, max_len = (9,13)):
+
     src_max_len, tar_max_len = max_len
     # initialize the triple and states
     tr, ss = _init_states(enc_model, src_sentence, tokenizers, src_max_len)
@@ -332,11 +357,7 @@ def infer_lstm(src_sentence, enc_model, dec_model, tokenizers, max_len = (9,13))
         if tr[1][-1] == '<e>' or tr[1][-1] == None:
             break
     return ''.join(tr[1])
-```
 
-this is the code to generate translated results for the first 50 rows. 
-
-```python
 import pandas as pd
 df = pd.read_csv('./data/cmn_simplied.txt',sep='\t', header=None, names = ['en','cn'])
 
