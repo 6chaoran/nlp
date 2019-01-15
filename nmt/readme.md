@@ -16,4 +16,4 @@ python infer_lstm.py
 python infer_lstm.py -m input
 ```
 ## Explaination
-[link](https://github.com/6chaoran/nlp/blob/master/nmt/doc/build-a-simple-machine-translator-part-1.md)
+[seq2seq encoder-decoder model](https://github.com/6chaoran/nlp/blob/master/nmt/doc/build-a-simple-machine-translator-part-1.md)
