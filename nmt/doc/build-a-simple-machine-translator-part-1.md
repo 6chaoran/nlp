@@ -36,9 +36,9 @@ However, we can't directly use the model for predicting, because we won't know t
 ## demo of english-chinese translation
 
 ![](https://raw.githubusercontent.com/6chaoran/nlp/master/nmt/image/demo.png)
-github repo: [https://github.com/6chaoran/nlp/tree/master/nmt](https://github.com/6chaoran/nlp/tree/master/nmt)
-jupyter notebook: [https://github.com/6chaoran/nlp/blob/master/nmt/infer_lstm.ipynb
-](https://github.com/6chaoran/nlp/blob/master/nmt/infer_lstm.ipynb)
+
+* github repo: [https://github.com/6chaoran/nlp/tree/master/nmt](https://github.com/6chaoran/nlp/tree/master/nmt)
+* jupyter notebook: [https://github.com/6chaoran/nlp/blob/master/nmt/infer_lstm.ipynb](https://github.com/6chaoran/nlp/blob/master/nmt/infer_lstm.ipynb)
 
 # Dataset
 
