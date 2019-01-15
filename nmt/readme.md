@@ -9,7 +9,9 @@ python run_preprocess.py
 # to train encoder-decoder-lstm model
 python train_lstm.py
 
-# to check translation results
+# to check some random translation results
 python infer_lstm.py
-```
 
+# to check translation from user-input
+python infer_lstm.py -m input
+```
