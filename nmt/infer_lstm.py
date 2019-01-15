@@ -32,10 +32,13 @@ if __name__ == '__main__':
 	enc_dec_model.load_weights(weight_path)
 
 	if args.mode == 'input':
-		src_raw = input("enter your sentence (in english): ")
-		src = clean_eng(src_raw)
-		dec = infer_lstm(src, enc_model, dec_model, tokenizers)
-		print('[%s] => [%s]'%(src,dec))
+		while True:
+			src_raw = input("enter your sentence (in english), type quit/q to exit: ")
+			if src_raw in ['quit','q']:
+				break
+			src = clean_eng(src_raw)
+			dec = infer_lstm(src, enc_model, dec_model, tokenizers)
+			print('[%s] => [%s]'%(src,dec))
 
 	if args.mode == 'default':
 		for i in np.random.choice(len(df), 50, replace=False):
