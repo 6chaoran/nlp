@@ -10,7 +10,6 @@ It uses encoder decoder arthitecture, which is widely wised in different tasks i
 
 The model consists of two major components:
 
-
 * __Encoder__: a RNN network, used understand the input sequence and learning the pattern. 
 
 * __Decoder__: a RNN netowrk, used to generate the sequence based on learned pattern from encoder.
@@ -33,6 +32,13 @@ However, we can't directly use the model for predicting, because we won't know t
     + for each token prediction, we can choose the token with the most probability, this is called greedy search. We just get the best at current moment. 
     + alternatively, if we keep the n best candidate tokens, and search for a wider options, this is called beam search, n is the beam size.
     + the stop criteria can be the `<e>` token or the length of sentence is reached the maximal.
+
+## demo of english-chinese translation
+
+![](https://raw.githubusercontent.com/6chaoran/nlp/master/nmt/image/demo.png)
+github repo: [https://github.com/6chaoran/nlp/tree/master/nmt](https://github.com/6chaoran/nlp/tree/master/nmt)
+jupyter notebook: [https://github.com/6chaoran/nlp/blob/master/nmt/infer_lstm.ipynb
+](https://github.com/6chaoran/nlp/blob/master/nmt/infer_lstm.ipynb)
 
 # Dataset
 
@@ -426,9 +432,10 @@ The results is not perfect, but some of them are quite funny.
 
 # Extension
 
+The full python code is available at github: [https://github.com/6chaoran/nlp/tree/master/nmt](https://github.com/6chaoran/nlp/tree/master/nmt)
 With this simple model setup, we still a lot of opportunities to improve, such as 
 
-* Richer Feature Encoding of sentence (POS Taggin, NER)
+* Richer Feature Encoding of sentence (POS Tagging, NER)
 * Bidirectional-LSTM
 * Stack more layers of LSTM
 * Attention Mechansim
