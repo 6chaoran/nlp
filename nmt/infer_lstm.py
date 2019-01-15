@@ -22,14 +22,20 @@ tokenizers = load_object(input_path+'tokenizers.pkl')
 
 model_config['latent_dim'] = latent_dim
 enc_dec_model, enc_model, dec_model = enc_dec_lstm(**model_config)
-enc_dec_model.load_weights(weight_path)
+try:
+	enc_dec_model.load_weights(weight_path)
+	print('weights loaded!')
+except:
+	print('no weights found! using random weights.')
 tar_max_len = model_config['tar_max_len']
 
 
 if __name__ == '__main__':
 
-	df = pd.read_csv('./data/cmn_simplied.txt',sep='\t', header=None, names = ['en','cn'])
-	enc_dec_model.load_weights(weight_path)
+	df = pd.read_csv('./data/cmn_simplied.txt',
+						sep='\t', 
+						header=None, 
+						names = ['en','cn'])
 
 	if args.mode == 'input':
 		while True:
