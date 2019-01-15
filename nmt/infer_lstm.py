@@ -3,6 +3,14 @@ from util.util_prep import load_object
 from util.util_prep import clean_eng
 import pandas as pd
 import numpy as np
+import argparse
+
+parser = argparse.ArgumentParser(description='infer lstm')
+parser.add_argument('-m','--mode', default = 'default', dest = 'mode', 
+	choices = ['default','input'], help='mode')
+args = parser.parse_args()
+
+
 #======== model paramters =======
 input_path = './input/'
 latent_dim = 512
@@ -23,8 +31,15 @@ if __name__ == '__main__':
 	df = pd.read_csv('./data/cmn_simplied.txt',sep='\t', header=None, names = ['en','cn'])
 	enc_dec_model.load_weights(weight_path)
 
-	for i in np.random.choice(len(df), 50, replace=False):
-	    src_raw = df.en.values[i]
-	    src = clean_eng(src_raw)
-	    dec = infer_lstm(src, enc_model, dec_model, tokenizers)
-	    print('[%s] => [%s]'%(src,dec))
+	if args.mode == 'input':
+		src_raw = input("enter your sentence (in english): ")
+		src = clean_eng(src_raw)
+		dec = infer_lstm(src, enc_model, dec_model, tokenizers)
+		print('[%s] => [%s]'%(src,dec))
+
+	if args.mode == 'default':
+		for i in np.random.choice(len(df), 50, replace=False):
+		    src_raw = df.en.values[i]
+		    src = clean_eng(src_raw)
+		    dec = infer_lstm(src, enc_model, dec_model, tokenizers)
+		    print('[%s] => [%s]'%(src,dec))
