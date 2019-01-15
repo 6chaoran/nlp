@@ -18,10 +18,10 @@ The model consists of two major components:
 major steps to train a seq2seq model:
 
 1. __Word/Sentence representation__: this includes tokenize the input and output sentences, matrix representation of sentences, such as TF-IDF, bag-of-words.
-2. __Word Embedding___: lower dimensional representation of words. With a sizable corpus, embedding layers are highly recommended.
+2. __Word Embedding__: lower dimensional representation of words. With a sizable corpus, embedding layers are highly recommended.
 3. __Feed Encoder__: input source tokens/embedded array into encoder RNN (I used LSTM in this post) and learn the hidden states
-4. __Connect Encoder & Decoder___: pass the hidden states to decoder RNN as the initial states
-5. __Decoder Teacher Forcing___: input the sentence to be translated to decoder RNN, and target is the sentences which is one word right-shifted. In the structure, the objective of each word in the decoder sentence is to predict the next word, with the condition of encoded sentence and prior decoded words.  This kind of network training is called **teacher forcing**.
+4. __Connect Encoder & Decoder__: pass the hidden states to decoder RNN as the initial states
+5. __Decoder Teacher Forcing__: input the sentence to be translated to decoder RNN, and target is the sentences which is one word right-shifted. In the structure, the objective of each word in the decoder sentence is to predict the next word, with the condition of encoded sentence and prior decoded words.  This kind of network training is called **teacher forcing**.
 
 However, we can't directly use the model for predicting, because we won't know the decoded sentences when we use the model to translate. Therefore, we need another inference model to performance translation (sequence generation).
 
@@ -128,7 +128,72 @@ The resulting prepared data should look like something below:
 ```
 ## Encoder
 
+Encoder is simply an Embedding layer + LSTM.
+
+* input: the padded sequence for source sentence
+* output: encoder hidden states
+
+For simplicity, I used the same `latent_dim` for Embedding layer and LSTM, but they can be different. 
+LSTM need set `return_state` True, to output the hidden states (h,c). By fault, LSTM only output the output array from the last time-step.
+
+```python
+# encoder model
+enc_input = Input((None,), name = 'encoder_input_seq')
+# need add 1 space, because embedding look up table starts from 1
+enc_embed = Embedding(src_vocab_size + 1, latent_dim, name = 'encoder_embed')
+# set return_state True
+encoder = LSTM(latent_dim, return_state=True, name = 'encoder')
+
+enc_z, enc_state_h, enc_state_c = encoder(enc_embed(enc_input))
+enc_states = [enc_state_h, enc_state_c]
+enc_model = Model(enc_input, enc_states)
+```
+![](https://raw.githubusercontent.com/6chaoran/nlp/master/nmt/image/encoder_model_layout.png)
+
 ## Decoder
+
+Decoder is another combining of Embedding layer and LSTM.
+
+* input: encoder hidden states and input decoded sequence
+* output: the target decoded sequence (one word shifted)
+
+```python
+# decoder model
+dec_input = Input((None,), name = 'decoder_input_seq')
+dec_state_h_input = Input((latent_dim,), name = 'decoder_input_state_h')
+dec_state_c_input = Input((latent_dim,), name = 'decoder_input_state_c')
+dec_states_input = [dec_state_h_input, dec_state_c_input]
+
+dec_embed = Embedding(tar_vocab_size + 1, latent_dim, name = 'decoder_embed')
+# set return sequence True, so that we can compare all the next words
+decoder = LSTM(latent_dim, return_state=True, return_sequences=True, name = 'decoder')
+# softmax layer to output the target tokens
+dec_fc = TimeDistributed(Dense(tar_vocab_size, activation='softmax'), name = 'decoder_output')
+
+dec_z, dec_state_h, dec_state_c = decoder(dec_embed(dec_input), initial_state = dec_states_input)
+dec_states_output = [dec_state_h, dec_state_c]
+dec_output = dec_fc(dec_z)
+
+dec_model = Model([dec_input]+dec_states_input, [dec_output]+dec_states_output)
+```
+![](https://raw.githubusercontent.com/6chaoran/nlp/master/nmt/image/decoder_model_layout.png)
+
+## Encoder-Deocder
+
+To train the encoder-decoder network, we just combine the parts together.
+
+```python
+# decoder gets the inital states from encoder
+tar_logit, _, _ = decoder(dec_embed(dec_input), initial_state= enc_states)
+# project the target dimension for prediction
+tar_output = dec_fc(tar_logit)
+
+enc_dec_model = Model([enc_input, dec_input], tar_output)
+enc_dec_model.compile(optimizer='adam', loss='categorical_crossentropy')
+```
+
+![](https://raw.githubusercontent.com/6chaoran/nlp/master/nmt/image/encoder_decoder_model_layout.png)
+
 
 # Reference
 
