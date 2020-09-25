@@ -1,4 +1,4 @@
-jieba==0.39
-tensorflow==1.11.0
-numpy==1.15.4
-pandas==0.23.4
+jieba>=0.39
+tensorflow>=1.11.0
+numpy>=1.15.4
+pandas>=0.23.4
